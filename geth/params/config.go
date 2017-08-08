@@ -291,7 +291,7 @@ type NodeConfig struct {
 	BootClusterConfig *BootClusterConfig `json:"BootClusterConfig,"`
 
 	// LightEthConfig extra configuration for LES
-	LightEthConfig *LightEthConfig `json:"LightEthConfig,"`
+	LightEthConfig LightEthConfig `json:"LightEthConfig,"`
 
 	// WhisperConfig extra configuration for SHH
 	WhisperConfig *WhisperConfig `json:"WhisperConfig,"`
@@ -324,7 +324,7 @@ func NewNodeConfig(dataDir string, networkID uint64, devMode bool) (*NodeConfig,
 			Enabled:   true,
 			BootNodes: []string{},
 		},
-		LightEthConfig: &LightEthConfig{
+		LightEthConfig: LightEthConfig{
 			Enabled:       true,
 			DatabaseCache: DatabaseCache,
 		},
@@ -464,7 +464,7 @@ func (c *NodeConfig) updateBootClusterConfig() error {
 		Dev         subClusterConfig `json:"dev"`
 	}
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := &http.Client{Timeout: 20 * time.Second}
 	r, err := client.Get(BootClusterConfigURL + "?u=" + strconv.Itoa(int(time.Now().Unix())))
 	if err != nil {
 		return err

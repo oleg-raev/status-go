@@ -144,6 +144,7 @@ func updateCHT(eth *les.LightEthereum, config *params.NodeConfig) {
 		Number: uint64(config.BootClusterConfig.RootNumber),
 		Root:   gethcommon.HexToHash(config.BootClusterConfig.RootHash),
 	})
+
 	log.Info("Added trusted CHT",
 		"develop", config.DevMode, "number", config.BootClusterConfig.RootNumber, "hash", config.BootClusterConfig.RootHash)
 }

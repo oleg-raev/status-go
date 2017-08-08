@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -111,14 +112,23 @@ func FirstBlockHash(require *assertions.Assertions, nodeManager common.NodeManag
 }
 
 func MakeTestNodeConfig(networkID int) (*params.NodeConfig, error) {
+	configDir := filepath.Join(TestDataDir, TestNetworkNames[networkID])
+
+	// We need this to fix issues with developing on windows, characters like \U
+	// are seen has escape sequences by JSON decoder.
+	if runtime.GOOS == "windows" {
+		configDir = filepath.ToSlash(configDir)
+	}
+
 	configJSON := `{
 		"NetworkId": ` + strconv.Itoa(networkID) + `,
-		"DataDir": "` + filepath.Join(TestDataDir, TestNetworkNames[networkID]) + `",
+		"DataDir": "` + configDir + `",
 		"HTTPPort": ` + strconv.Itoa(TestConfig.Node.HTTPPort) + `,
 		"WSPort": ` + strconv.Itoa(TestConfig.Node.WSPort) + `,
 		"LogEnabled": true,
 		"LogLevel": "ERROR"
 	}`
+
 	nodeConfig, err := params.LoadNodeConfig(configJSON)
 	if err != nil {
 		return nil, err

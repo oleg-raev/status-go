@@ -432,6 +432,7 @@ func (c *NodeConfig) updateGenesisConfig() error {
 
 	// encode the genesis into JSON
 	enc, err := json.Marshal(genesis)
+	fmt.Printf("Error occured: %+q\n", err)
 	if err != nil {
 		return err
 	}

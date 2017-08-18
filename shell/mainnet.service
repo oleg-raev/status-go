@@ -1,0 +1,9 @@
+[Unit]
+Description=Launch Statusd Binary
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "statusd --bootcluster mainnet.dev.json faucet"
+
+[Install]
+WantedBy=multi-user.target

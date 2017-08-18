@@ -1,0 +1,10 @@
+[Unit]
+Description=Launch Statusd Binary
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "statusd --bootcluster robsten.dev.json faucet"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

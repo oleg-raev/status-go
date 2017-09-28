@@ -3,6 +3,7 @@ package jail_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -144,7 +145,7 @@ func (s *JailTestSuite) TestJailRPCAsyncSend() {
 	// internally (since we replaced `web3.send` with `jail.Send`)
 	// all requests to web3 are forwarded to `jail.Send`
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -277,4 +278,37 @@ func (s *JailTestSuite) TestEventSignal() {
 
 	expectedResponse := `{"jsonrpc":"2.0","result":true}`
 	require.Equal(expectedResponse, response)
+}
+
+func (s *JailTestSuite) TestCallResponseOrder() {
+	statusJS := baseStatusJSCode + `;
+	_status_catalog.commands["testCommand"] = function (params) {
+		return params.val * params.val;
+	};
+	_status_catalog.commands["calculateGasPrice"] = function (n) {
+		var gasMultiplicator = Math.pow(1.4, n).toFixed(3);
+		var price = 211000000000;
+		try {
+			price = web3.eth.gasPrice;
+		} catch (err) {}
+
+		return price * gasMultiplicator;
+	};
+	`
+	s.jail.Parse(testChatID, statusJS)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			res := s.jail.Call(testChatID, `["commands", "testCommand"]`, fmt.Sprintf(`{"val": %d}`, i))
+			s.Equal(res, fmt.Sprintf(`{"result": %d}`, i*i))
+
+			res2 := s.jail.Call(testChatID, `["commands", "calculateGasPrice"]`, fmt.Sprintf(`%d`, i))
+			fmt.Println(res2)
+		}(i)
+	}
+
+	wg.Wait()
 }

@@ -21,6 +21,10 @@ func New(vm *otto.Otto) *VM {
 	}
 }
 
+func (vm *VM) Otto() *otto.Otto {
+	return vm.vm
+}
+
 // Set sets the value to be keyed by the provided keyname.
 func (vm *VM) Set(key string, val interface{}) error {
 	vm.Lock()

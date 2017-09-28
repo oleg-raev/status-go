@@ -73,12 +73,12 @@ func makeAsyncSendHandler(jail *Jail, cellInt common.JailCell) func(call otto.Fu
 	cell := cellInt.(*Cell)
 	return func(call otto.FunctionCall) otto.Value {
 		go func() {
-			response := jail.Send(call, cell.VM)
+			response := jail.SendAsync(call, cell.VM)
 
 			if fn := call.Argument(1); fn.Class() == "Function" {
-				cell.Lock()
+				cell.VM.Lock()
 				fn.Call(otto.NullValue(), otto.NullValue(), response)
-				cell.Unlock()
+				cell.VM.Unlock()
 			}
 		}()
 		return otto.UndefinedValue()
@@ -94,10 +94,10 @@ func makeSendHandler(jail *Jail, cellInt common.JailCell) func(call otto.Functio
 		// method of jail.Cell and the cell is locked during that call. In order to allow jail.Send
 		// to perform any operations on cell.VM and not hang, we need to unlock the mutex and return
 		// it to the previous state afterwards so that the caller didn't panic doing cell.Unlock().
-		cell.Unlock()
-		defer cell.Lock()
+		// cell.Unlock()
+		// defer cell.Lock()
 
-		return jail.Send(call, cell.VM)
+		return jail.Send(call, cell.VM.Otto())
 	}
 }
 
@@ -110,11 +110,11 @@ func makeJethIsConnectedHandler(jail *Jail, cellInt common.JailCell) func(call o
 
 		var netListeningResult bool
 		if err := client.Call(&netListeningResult, "net_listening"); err != nil {
-			return newErrorResponseOtto(cell.VM, err.Error(), nil)
+			return newErrorResponseOtto(cell.VM.Otto(), err.Error(), nil)
 		}
 
 		if !netListeningResult {
-			return newErrorResponseOtto(cell.VM, node.ErrNoRunningNode.Error(), nil)
+			return newErrorResponseOtto(cell.VM.Otto(), node.ErrNoRunningNode.Error(), nil)
 		}
 
 		return newResultResponse(call.Otto, true)

@@ -3,9 +3,10 @@ package jail
 import (
 	"context"
 
+	"github.com/robertkrimen/otto"
+
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/status-im/status-go/geth/common"
-	"github.com/status-im/status-go/geth/jail/internal/vm"
 	"github.com/status-im/status-go/geth/params"
 	"github.com/status-im/status-go/geth/rpc"
 )
@@ -30,12 +31,12 @@ func NewExecutionPolicy(
 }
 
 // Execute handles the execution of a RPC request and routes appropriately to either a local or remote ethereum node.
-func (ep *ExecutionPolicy) Execute(req common.RPCCall, vm *vm.VM) (map[string]interface{}, error) {
+func (ep *ExecutionPolicy) Execute(req common.RPCCall, vm *otto.Otto) (map[string]interface{}, error) {
 	client := ep.nodeManager.RPCClient()
 	return ep.executeWithClient(client, vm, req)
 }
 
-func (ep *ExecutionPolicy) executeWithClient(client *rpc.Client, vm *vm.VM, req common.RPCCall) (map[string]interface{}, error) {
+func (ep *ExecutionPolicy) executeWithClient(client *rpc.Client, vm *otto.Otto, req common.RPCCall) (map[string]interface{}, error) {
 	// Arbitrary JSON-RPC response.
 	var result interface{}
 
@@ -85,14 +86,14 @@ func (ep *ExecutionPolicy) executeWithClient(client *rpc.Client, vm *vm.VM, req 
 }
 
 // preProcessRequest pre-processes a given RPC call to a given Otto VM
-func preProcessRequest(vm *vm.VM) (string, error) {
+func preProcessRequest(vm *otto.Otto) (string, error) {
 	messageID := currentMessageID(vm)
 
 	return messageID, nil
 }
 
 // postProcessRequest post-processes a given RPC call to a given Otto VM
-func postProcessRequest(vm *vm.VM, req common.RPCCall, messageID string) {
+func postProcessRequest(vm *otto.Otto, req common.RPCCall, messageID string) {
 	if len(messageID) > 0 {
 		vm.Call("addContext", nil, messageID, common.MessageIDKey, messageID) // nolint: errcheck
 	}
@@ -104,7 +105,7 @@ func postProcessRequest(vm *vm.VM, req common.RPCCall, messageID string) {
 }
 
 // currentMessageID looks for `status.message_id` variable in current JS context
-func currentMessageID(vm *vm.VM) string {
+func currentMessageID(vm *otto.Otto) string {
 	msgID, err := vm.Run("status.message_id")
 	if err != nil {
 		return ""

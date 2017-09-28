@@ -151,10 +151,17 @@ func (jail *Jail) Call(chatID, this, args string) string {
 	return makeResult(res.String(), err)
 }
 
+func (jail *Jail) SendAsync(call otto.FunctionCall, vm *vm.VM) otto.Value {
+	vm.Lock()
+	defer vm.Unlock()
+
+	return jail.Send(call, vm.Otto())
+}
+
 // Send will serialize the first argument, send it to the node and returns the response.
 // IMPORTANT: Don't use `call.Otto` in this function unless you want to run into race conditions. Use `vm` instead.
 // nolint: errcheck, unparam
-func (jail *Jail) Send(call otto.FunctionCall, vm *vm.VM) otto.Value {
+func (jail *Jail) Send(call otto.FunctionCall, vm *otto.Otto) otto.Value {
 	reqVal, err := vm.Call("JSON.stringify", nil, call.Argument(0))
 	if err != nil {
 		throwJSException(err)
@@ -227,7 +234,7 @@ func newErrorResponse(msg string, id interface{}) map[string]interface{} {
 	}
 }
 
-func newErrorResponseOtto(vm *vm.VM, msg string, id interface{}) otto.Value {
+func newErrorResponseOtto(vm *otto.Otto, msg string, id interface{}) otto.Value {
 	// TODO(tiabc): Handle errors.
 	errResp, _ := json.Marshal(newErrorResponse(msg, id))
 	errRespVal, _ := vm.Run("(" + string(errResp) + ")")

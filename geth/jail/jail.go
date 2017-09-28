@@ -39,9 +39,6 @@ type Jail struct {
 func New(
 	nodeManager common.NodeManager, accountManager common.AccountManager, txQueueManager common.TxQueueManager,
 ) *Jail {
-	if nodeManager == nil || accountManager == nil || txQueueManager == nil {
-		panic("Jail is missing mandatory dependencies")
-	}
 	return &Jail{
 		nodeManager:    nodeManager,
 		accountManager: accountManager,
